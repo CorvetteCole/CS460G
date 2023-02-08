@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from decision_tree import DecisionTree
+import decision_tree
 
 """
 all data files are stored in data/
@@ -21,16 +21,16 @@ if __name__ == "__main__":
     data = pd.read_csv('data/synthetic-1.csv', header=None)
     x_values = data.values[:, :-1]
     y_values = data.values[:, -1]
-    # make sure y values are integers
-    y_values = y_values.astype(int)
+    # make sure y values are bools
+    y_values = y_values.astype(bool)
 
-    dt = DecisionTree(max_depth=3)
-    dt.fit(x_values, y_values)
-
-    # Test the decision tree on the synthetic dataset
-    y_predictions = dt.predict(x_values)
-
-    # Calculate the accuracy
-    error = np.mean(y_values != y_predictions)
-
-    print(f"Error: {error:.3f}")
+    # dt = DecisionTree(x_values, y_values, max_depth=3)
+    # dt.fit(x_values, y_values)
+    #
+    # # Test the decision tree on the synthetic dataset
+    # y_predictions = dt.predict(x_values)
+    #
+    # # Calculate the accuracy
+    # error = np.mean(y_values != y_predictions)
+    #
+    # print(f"Error: {error:.3f}")
