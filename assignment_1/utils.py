@@ -1,9 +1,7 @@
-import math
-
 import numpy
 
 
-def calculate_entropy_v2(labels: numpy.ndarray) -> float:
+def calculate_entropy(labels: numpy.ndarray) -> float:
     """
     Measures the amount of uncertainty in a probability distribution
 
@@ -28,11 +26,11 @@ def calculate_information_gain(features: numpy.ndarray, labels: numpy.ndarray, f
     :return: The information gain of the split
     """
     # calculate entropy of the whole dataset
-    entropy = calculate_entropy_v2(labels)
+    entropy = calculate_entropy(labels)
 
     # calculate entropy of the left and right split
-    left_entropy = calculate_entropy_v2(labels[features[:, feature_index] <= threshold])
-    right_entropy = calculate_entropy_v2(labels[features[:, feature_index] > threshold])
+    left_entropy = calculate_entropy(labels[features[:, feature_index] <= threshold])
+    right_entropy = calculate_entropy(labels[features[:, feature_index] > threshold])
 
     # calculate information gain
     information_gain = entropy - (len(labels[features[:, feature_index] <= threshold]) / len(labels)) * left_entropy - (

@@ -1,5 +1,4 @@
 import numpy
-
 import utils
 
 
@@ -42,7 +41,7 @@ class DecisionTree:
         """
 
         # Check if we have reached the maximum depth or if the entropy is 0
-        if depth == self.max_depth or utils.calculate_entropy_v2(labels) == 0:
+        if depth == self.max_depth or utils.calculate_entropy(labels) == 0:
             # set prediction
             node = TreeNode()
             node.prediction = utils.get_majority_label(labels)
@@ -84,17 +83,3 @@ class DecisionTree:
                 node = node.children[1]
 
         return node.prediction
-
-    def predict(self, features: numpy.ndarray) -> numpy.ndarray:
-        """
-        Predict the labels for the given data
-
-        :param features: A numpy array of shape (n_samples, n_features)
-        :return: A numpy array of shape n_samples that represent the predicted labels
-        """
-        labels = []
-
-        for feature in features:
-            labels.append(self.predict_label(feature))
-
-        return numpy.array(labels)
