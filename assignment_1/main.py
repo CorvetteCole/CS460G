@@ -17,20 +17,38 @@ Total,HP,Attack,Defense,Sp. Atk,Sp. Def,Speed,Generation,Type 1_Bug,Type 1_Dark,
 """
 
 if __name__ == "__main__":
-    # load synthetic dataset 1
-    data = pd.read_csv('data/synthetic-1.csv', header=None)
-    x_values = data.values[:, :-1]
-    y_values = data.values[:, -1]
-    # make sure y values are bools
-    y_values = y_values.astype(bool)
 
-    # dt = DecisionTree(x_values, y_values, max_depth=3)
-    # dt.fit(x_values, y_values)
-    #
-    # # Test the decision tree on the synthetic dataset
-    # y_predictions = dt.predict(x_values)
-    #
-    # # Calculate the accuracy
-    # error = np.mean(y_values != y_predictions)
-    #
-    # print(f"Error: {error:.3f}")
+    for i in range(1, 5):
+        # load synthetic dataset 1
+        data = pd.read_csv(f'data/synthetic-{i}.csv', header=None)
+        features = data.values[:, :-1]
+        labels = data.values[:, -1]
+        # make sure labels are bools
+        labels = labels.astype(bool)
+
+        dt = decision_tree.DecisionTree(features, labels, max_depth=3)
+
+        # predict on the training data, measure accuracy
+        predictions = [dt.predict_label(feature) for feature in features]
+        accuracy = np.mean(predictions == labels)
+        print(f"Accuracy on synthetic-{i}: {accuracy*100:.2f}%")
+
+    # load pokemon dataset, strip headers
+    features = pd.read_csv('data/pokemonStats.csv').values
+    labels = pd.read_csv('data/pokemonLegendary.csv').values[:, 0]
+    # make sure labels are bools
+    labels = labels.astype(bool)
+
+    dt = decision_tree.DecisionTree(features, labels, max_depth=3)
+
+    # predict on the training data, measure accuracy
+    predictions = [dt.predict_label(feature) for feature in features]
+    accuracy = np.mean(predictions == labels)
+    print(f"Accuracy on pokemon: {accuracy*100:.2f}%")
+
+
+
+
+
+
+
