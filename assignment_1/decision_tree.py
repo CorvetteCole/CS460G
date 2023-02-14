@@ -48,12 +48,12 @@ class DecisionTree:
             node.prediction = utils.get_majority_label(labels)
             return node
 
-
         # Find the best split
         best_feature_index, best_threshold = utils.find_best_split(features, labels)
 
         # Split the data
-        features_left, labels_left, features_right, labels_right = utils.split_data(features, labels, best_feature_index, best_threshold)
+        features_left, labels_left, features_right, labels_right = utils.split_data(features, labels,
+                                                                                    best_feature_index, best_threshold)
 
         # Create the node
         node = TreeNode(feature_index=best_feature_index, threshold=best_threshold)
@@ -98,5 +98,3 @@ class DecisionTree:
             labels.append(self.predict_label(feature))
 
         return numpy.array(labels)
-
-
