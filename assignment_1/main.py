@@ -21,7 +21,6 @@ Total,HP,Attack,Defense,Sp. Atk,Sp. Def,Speed,Generation,Type 1_Bug,Type 1_Dark,
 
 if __name__ == "__main__":
 
-
     for i in range(1, 5):
         # load synthetic dataset 1
         data = pd.read_csv(f'data/synthetic-{i}.csv', header=None)
@@ -37,13 +36,11 @@ if __name__ == "__main__":
         accuracy = numpy.mean(predictions == labels)
         print(f"Accuracy on synthetic-{i}: {accuracy * 100:.2f}%")
 
-
         # matplotlib.pyplot.subplot(2, 2, i)
         # plot the decision tree
         # fig = matplotlib.pyplot.figure()
         # ax = fig.add_subplot(111)
         ax = matplotlib.pyplot.subplot(2, 2, i)
-
 
         # set axis limits from data
         ax.set_xlim(numpy.min(features[:, 0]), numpy.max(features[:, 0]))
@@ -79,7 +76,7 @@ if __name__ == "__main__":
     # predict on the training data, measure accuracy
     predictions = [pokemon_tree.predict_label(feature) for feature in features]
     accuracy = numpy.mean(predictions == labels)
-    print(f"Accuracy on pokemon: {accuracy*100:.2f}%")
+    print(f"Accuracy on pokemon: {accuracy * 100:.2f}%")
 
     fig = matplotlib.pyplot.figure()
     ax = fig.add_subplot(111)
@@ -104,7 +101,3 @@ if __name__ == "__main__":
     # Z = numpy.array([pokemon_tree.predict_label([x, y]) for x, y in zip(numpy.ravel(X), numpy.ravel(Y))])
 
     matplotlib.pyplot.show()
-
-
-
-
