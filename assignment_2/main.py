@@ -4,7 +4,6 @@ import logging
 
 import numpy
 
-
 from multilayer_perceptron import MultilayerPerceptron
 
 data_dir = os.path.join(os.path.dirname(__file__), 'data')
@@ -18,7 +17,6 @@ if __name__ == '__main__':
                         default=(0, 1))
     # Network arguments
     parser.add_argument('-e', '--epochs', help='Number of epochs to train for', type=int, default=1)
-    # parser.add_argument('-a', '--alpha', help='Learning rate', type=float, default=0.1)
     args = parser.parse_args()
 
     # Set up logging
@@ -37,15 +35,16 @@ if __name__ == '__main__':
         logging.error(f'Testing data file at "{testing_data_file}" does not exist')
         raise FileNotFoundError(f'Testing data file at "{testing_data_file}" does not exist')
 
-
     # read in the data
     training_data = numpy.loadtxt(training_data_file, delimiter=',')
     testing_data = numpy.loadtxt(testing_data_file, delimiter=',')
 
     mlp = MultilayerPerceptron(num_features=784, hidden_nodes=4, output_nodes=1)
 
-    mlp.train(training_data, 0.05)
+    for epoch in range(4):
+        logging.info(f'Epoch {epoch}')
+        mlp.train(training_data, 0.05)
+        logging.info(f'Train Accuracy: {mlp.test(training_data)} Test Accuracy: {mlp.test(testing_data)}')
 
     logging.info('Training complete')
-
-    logging.info(f'Accuracy: {mlp.test(testing_data)}')
+    logging.info(f'Final Accuracy: {mlp.test(testing_data)}')

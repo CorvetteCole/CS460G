@@ -1,3 +1,4 @@
+import logging
 import math
 import numpy
 from tqdm import tqdm
@@ -36,6 +37,15 @@ class MultilayerPerceptron:
         """
         return numpy.tanh(x * 0.5) * 0.5 + 0.5
 
+    @staticmethod
+    def sigmoid_derivative(x: numpy.ndarray) -> numpy.ndarray:
+        """
+        Derivative of the sigmoid function
+        :param x: Input
+        :return: Derivative of the sigmoid function at x
+        """
+        return MultilayerPerceptron.sigmoid(x) * (1 - MultilayerPerceptron.sigmoid(x))
+
     def __init__(self, num_features, hidden_nodes, output_nodes):
         """
         :param num_features: Number of features in the input data
@@ -47,7 +57,7 @@ class MultilayerPerceptron:
         self._hidden_nodes = hidden_nodes
         self._output_nodes = output_nodes
         self._biases = [numpy.random.uniform(low=-1, high=1, size=hidden_nodes),
-                        numpy.random.uniform(low=-1, high=1, size=1)]
+                        numpy.random.uniform(low=-1, high=1, size=output_nodes)]
 
         # randomly initialize weights as -1,0,1
         self.hidden_weights = numpy.random.uniform(low=-1, high=1, size=(num_features, hidden_nodes))
@@ -65,56 +75,63 @@ class MultilayerPerceptron:
     def output_nodes(self) -> int:
         return self._output_nodes
 
-    def train(self, data: numpy.ndarray, alpha: float) -> "MultilayerPerceptron":
+    def train(self, data: numpy.ndarray, alpha: float):
         """
         Train the network using backpropagation
 
         :param data: Training data
         :param alpha: Learning rate
-        :return: self
         """
 
         # worth noting that the data is a numpy array of shape (n, 785) where n is the number of training examples
 
         with logging_redirect_tqdm():
             for row in tqdm(data):
+                # logging.debug(f'Input: \n{row}')
+                # logging.debug(f'Output Weight Matrix: \n{self.output_weights}')
+                # logging.debug(f'Hidden Weight Matrix: \n{self.hidden_weights}')
+
                 input_layer = row[1:]
 
                 # Generate network output (forward pass)
-                hidden_layer_input = numpy.dot(input_layer, self.hidden_weights)
-                hidden_layer_input = numpy.add(hidden_layer_input, self._biases[0])
-                hidden_layer_output = self.sigmoid(hidden_layer_input)
+                # hidden layer output
+                # OutH = sigmoid((Wh * In) + bn)
+                hidden_layer_input = numpy.add(numpy.dot(self.hidden_weights.T, input_layer), self._biases[0])
+                hidden_layer_output = MultilayerPerceptron.sigmoid(hidden_layer_input)
 
                 # generate the full output
-                output_layer_input = numpy.dot(hidden_layer_output, self.output_weights)
-                output_layer_output = self.sigmoid(output_layer_input)
+                # Out = sigmoid((Wo * OutH) + bo)
+                output_layer_input = numpy.add(numpy.dot(self.output_weights.T, hidden_layer_output), self._biases[1])
+                output_layer_output = MultilayerPerceptron.sigmoid(output_layer_input)
 
-                # Calculate output error
-                output_error = row[0] - output_layer_output
+                # delta calculation for output and hidden
+                # delta_output = (Y-O) * output_layer_output
+                # where Y is the target value and O is the output value
+                # delta_output = (row[0] - output_layer_output) * output_layer_output
+                delta_output = numpy.multiply(numpy.subtract(row[0], output_layer_output),
+                                              MultilayerPerceptron.sigmoid_derivative(output_layer_input))
 
-                # Compute delta at the output
-                output_delta = output_error * output_layer_output * (1 - output_layer_output)
+                # delta_hidden = (Wh * delta_output) * hidden_layer_output
+                # where W is the weight and delta_output is the delta value of the output layer
+                delta_hidden_dot = numpy.dot(self.output_weights, delta_output)
+                delta_hidden_sigmoid_derivative = MultilayerPerceptron.sigmoid_derivative(hidden_layer_input)
+                delta_hidden = numpy.multiply(numpy.dot(self.output_weights, delta_output),
+                                              MultilayerPerceptron.sigmoid_derivative(hidden_layer_input))
 
-                # Propagate delta to previous layer
-                hidden_error = numpy.dot(output_delta, self.output_weights.T)
+                # numpy.multiply is scalar, numpy.dot is matrix multiplication, numpy.outer is outer product
 
-                # Compute delta at the hidden layer
-                hidden_delta = hidden_error * hidden_layer_output * (1 - hidden_layer_output)
+                # update weights
+                # W = W + alpha * delta_output * hidden_layer_output
+                self.output_weights = numpy.add(self.output_weights, numpy.multiply(alpha, numpy.outer(hidden_layer_output, delta_output)))
 
-                # Update weights between previous layer and current layer
-                self.output_weights += alpha * numpy.dot(hidden_layer_output.reshape(self.hidden_nodes, 1),
-                                                         output_delta.reshape(1, 1))
+                # Wh = Wh + alpha * (input_layer*delta_hiddenT)
+                self.hidden_weights = numpy.add(self.hidden_weights,
+                                                numpy.multiply(alpha, numpy.outer(input_layer, delta_hidden.T)))
 
-                # Update weights between input and first hidden layer
-                self.hidden_weights += alpha * numpy.dot(input_layer.reshape(self.num_features, 1),
-                                                         hidden_delta.reshape(1, self.hidden_nodes))
-
-                # Update biases
-                self._biases[0] += alpha * hidden_delta
-
-                self._biases[1] += alpha * output_delta
-
-        return self
+                # bo = bo + alpha * delta_output
+                self._biases[1] = numpy.add(self._biases[1], numpy.multiply(alpha, delta_output))
+                # bn = bn + alpha * delta_hidden
+                self._biases[0] = numpy.add(self._biases[0], numpy.multiply(alpha, delta_hidden))
 
     def test(self, data: numpy.ndarray) -> float:
         """
@@ -123,33 +140,25 @@ class MultilayerPerceptron:
         :param data: Test data
         :return: Accuracy rate
         """
-
-        # IMPORTANT: we are checking the accuracy of the network on the test data. We will store how many times the network
-        # correctly predicts the label of the test data in the variable correct. We will then divide correct by the number
-        # of test examples to get the accuracy rate.
-
         correct = 0
         for row in data:
             input_layer = row[1:]
 
-            # Generate network output (forward pass)
-            hidden_layer_input = numpy.dot(input_layer, self.hidden_weights)
-            hidden_layer_input = numpy.add(hidden_layer_input, self._biases[0])
+            # hidden layer output
+            hidden_layer_input = numpy.dot(input_layer, self.hidden_weights) + self._biases[0]
             hidden_layer_output = self.sigmoid(hidden_layer_input)
 
             # generate the full output
-            output_layer_input = numpy.dot(hidden_layer_output, self.output_weights)
+            output_layer_input = numpy.dot(hidden_layer_output, self.output_weights) + self._biases[1]
             output_layer_output = self.sigmoid(output_layer_input)
 
-            # Calculate output error
-            output_error = row[0] - output_layer_output
-
-            if output_layer_output > 0.5:
-                output_layer_output = 1
+            if self.output_nodes == 1:
+                if abs(output_layer_output[0] - row[0]) < 0.5:
+                    correct += 1
             else:
-                output_layer_output = 0
-
-            if output_layer_output == row[0]:
-                correct += 1
+                guess_index = numpy.argmax(output_layer_output)
+                actual = row[0]
+                if guess_index == actual:
+                    correct += 1
 
         return correct / len(data)
